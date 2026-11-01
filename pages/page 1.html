@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>KDou - Exploration</title>
+<link href="../assets/style.css" rel="stylesheet"/>
+</head>
+<body>
+<header>
+<nav>
+<a class="logo" href="../index.html">KDOU</a>
+<div class="menu">
+<a href="../index.html">Accueil</a>
+<a href="base.html">Base de données</a>
+<a href="page 1.html">Exploration</a>
+<a href="page 2.html">Analyse</a>
+<a href="page 3.html">Propositions</a>
+</div>
+</nav>
+</header>
+<main>
+<section class="introduction">
+<h1>Exploration des données</h1>
+<p>Nos premières requêtes SQL pour découvrir les clients, les produits et les fournisseurs de KDou.</p>
+    <p>Sujet de la SAE sur laquelle nous avons travaillé : </p>
+    <a href="../assets/rapports/SAE2026.pdf">SAE2026</a>
+</section>
+<section class="presentation">
+<h2>Notre démarche</h2>
+<p>
+                Pour cette première partie, nous avons réalisé les questions a à j avec Microsoft Access.
+                Les requêtes permettent de filtrer, trier et relier les informations des différentes tables.
+                Nous présentons les méthodes de Marc et de Maxim ainsi que les captures disponibles dans leurs rapports.
+            </p>
+<h3>Accéder directement à une question</h3>
+<ul>
+<li><a href="#question-a">a - Clients situés à Paris</a></li>
+<li><a href="#question-b">b - Produits américains à moins de 25 €</a></li>
+<li><a href="#question-c">c - Viandes et poissons à plus de 50 €</a></li>
+<li><a href="#question-d">d - Fournisseurs de viande ou de poisson</a></li>
+<li><a href="#question-e">e - Fournisseurs de viande ET de poisson</a></li>
+<li><a href="#question-f">f - Conditionnements en carton ou en verre</a></li>
+<li><a href="#question-g">g - Trois dernières commandes de Max Deschamps</a></li>
+<li><a href="#question-h">h - Fournisseurs proposant uniquement des desserts</a></li>
+<li><a href="#question-i">i - Fournisseurs étrangers sans produit</a></li>
+<li><a href="#question-j">j - Clients partenaires situés à Paris</a></li>
+</ul>
+</section>
+<section class="presentation" id="question-a">
+<h2>a - Les clients situés à Paris</h2>
+<h3>Objectif</h3>
+<p>
+                Retrouver les clients qui habitent à Paris et les classer par ordre alphabétique
+                selon le nom de leur société.
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT *
+FROM Clientele
+WHERE Clientele.Ville = "Paris"
+ORDER BY Clientele.Societe ASC;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure capture-large">
+<img alt="Tableau Access des clients situés à Paris, classés par société" class="image-resultat" src="../assets/images/exploration/marc/a-clients-paris.png"/>
+<figcaption>Capture du rapport de Marc : clients parisiens.</figcaption>
+</figure>
+<p>
+                Le filtre WHERE conserve uniquement les clients de Paris.
+                Maxim a également signalé dans son rapport une incohérence entre la ville et
+                le code postal d'un client : c'est une information à vérifier dans la base.
+            </p>
+</section>
+<section class="presentation" id="question-b">
+<h2>b - Les produits américains à moins de 25 €</h2>
+<h3>Objectif</h3>
+<p>
+                Afficher les produits provenant des États-Unis dont le coût d'achat est inférieur à 25 €,
+                avec leur fournisseur et la ville de celui-ci.
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT
+    Fournisseur.Societe,
+    Pays.PaysFR,
+    Produit.CoutAchat,
+    Produit.NomProd,
+    Fournisseur.Ville
+FROM
+    Pays
+    INNER JOIN (
+        Fournisseur
+        INNER JOIN Produit
+        ON Fournisseur.NoFour = Produit.NoFour
+    ) ON Pays.NoPays = Fournisseur.NoPays
+WHERE
+    Pays.PaysFR = "Etats-Unis"
+    AND Produit.CoutAchat &lt; 25;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Tableau des produits américains coûtant moins de 25 euros" class="image-resultat" src="../assets/images/exploration/marc/b-produits-etats-unis.png"/>
+<figcaption>Capture du rapport de Marc : produits américains sélectionnés.</figcaption>
+</figure>
+<p>
+                Nous avons relié les tables Produit, Fournisseur et Pays.
+                La condition sur le pays et le prix permet de conserver uniquement les articles recherchés.
+            </p>
+<h3>Méthode de Killian</h3><p>Killian a utilisé DISTINCT, une jointure entre Produit, Fournisseur et Pays, puis un filtre sur le coût et le pays.</p><pre><code>SELECT DISTINCT P.NomProd, P.CoutAchat, F.Societe, F.Ville
+FROM (Produit AS P INNER JOIN Fournisseur AS F ON P.NoFour = F.NoFour)
+INNER JOIN Pays ON Pays.NoPays = F.NoPays
+WHERE (P.CoutAchat &lt; 25 AND Pays.PaysFR = "Etats-Unis")
+ORDER BY P.NomProd;</code></pre><figure class="capture-figure"><img alt="Résultat Access de Killian pour les produits américains coûtant moins de 25 euros" class="image-resultat" src="../assets/images/exploration/killian/b-etats-unis-moins-25.png"/><figcaption>Killian : produits américains de moins de 25 €.</figcaption></figure><p>Son tableau contient huit produits et est trié par nom de produit.</p></section>
+<section class="presentation" id="question-c">
+<h2>c - Les viandes et poissons à plus de 50 €</h2>
+<h3>Objectif</h3>
+<p>
+                Retrouver les produits des catégories Viandes ou Poissons et fruits de mer
+                dont le coût d'achat dépasse 50 €, avec leur fournisseur et leur pays d'origine.
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT
+    Produit.NomProd,
+    Fournisseur.Societe,
+    Pays.PaysFR,
+    Produit.CoutAchat
+FROM
+    ((Produit
+    INNER JOIN Fournisseur
+    ON Produit.NoFour = Fournisseur.NoFour)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg)
+    INNER JOIN Pays
+    ON Fournisseur.NoPays = Pays.NoPays
+WHERE
+    (Categorie.NomCateg LIKE "*viande*"
+    OR Categorie.NomCateg LIKE "*poisson*")
+    AND Produit.CoutAchat &gt; 50;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Tableau des produits carnés ou de la mer à plus de 50 euros" class="image-resultat" src="../assets/images/exploration/marc/c-viandes-poissons-plus-50.png"/>
+<figcaption>Capture du rapport de Marc : liste des produits correspondants.</figcaption>
+</figure>
+<p>
+                La version SQL affichée ici est celle de Maxim. Les parenthèses autour
+                des deux catégories permettent d'appliquer le prix supérieur à 50 €
+                aux viandes <strong>et</strong> aux poissons. C'est une difficulté qu'il explique dans son rapport.
+            </p>
+<h3>Méthode de Killian</h3><p>Killian a relié Produit, Fournisseur, Pays et Categorie. Il applique le seuil de 50 € aux produits appartenant aux catégories viandes ou poissons.</p><pre><code>SELECT DISTINCT
+    P.NomProd,
+    F.Societe,
+    Pays.PaysFR,
+    P.CoutAchat
+FROM
+    ((Produit AS P
+    INNER JOIN Fournisseur AS F ON P.NoFour = F.NoFour)
+    INNER JOIN Pays ON F.NoPays = Pays.NoPays)
+    INNER JOIN Categorie AS C ON P.CodeCateg = C.CodeCateg
+WHERE
+    (C.NomCateg LIKE "*Viande*" OR C.NomCateg LIKE "*Poisson*")
+    AND P.CoutAchat &gt; 50
+ORDER BY P.NomProd;</code></pre><figure class="capture-figure"><img alt="Résultat de Killian pour les produits de viande ou poisson dépassant 50 euros" class="image-resultat" src="../assets/images/exploration/killian/c-viandes-poissons-plus-50.png"/><figcaption>Killian : produits de viande et de poisson de plus de 50 €.</figcaption></figure></section>
+<section class="presentation" id="question-d">
+<h2>d - Les fournisseurs de viande ou de poisson</h2>
+<h3>Objectif</h3>
+<p>
+                Obtenir une liste des fournisseurs qui proposent au moins un produit
+                de la catégorie Viandes <strong>ou</strong> Poissons et fruits de mer.
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT DISTINCT
+    Fournisseur.Societe
+FROM
+    (Fournisseur
+    INNER JOIN Produit
+    ON Fournisseur.NoFour = Produit.NoFour)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg
+WHERE
+    Categorie.NomCateg LIKE "*viande*"
+    OR Categorie.NomCateg LIKE "*poisson*"
+ORDER BY
+    Fournisseur.Societe;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Vérification des fournisseurs et de leurs catégories de produits" class="image-resultat" src="../assets/images/exploration/marc/d-fournisseurs-categories.png"/>
+<figcaption>Étape de vérification : on affiche également le nom de la catégorie.</figcaption>
+</figure>
+<figure class="capture-figure">
+<img alt="Liste distincte des sociétés proposant des viandes ou des poissons" class="image-resultat" src="../assets/images/exploration/marc/d-fournisseurs-liste.png"/>
+<figcaption>Résultat final de Marc : les noms des fournisseurs sans doublons.</figcaption>
+</figure>
+<p>
+                DISTINCT évite d'afficher plusieurs fois la même société lorsqu'elle propose plusieurs produits.
+                Ici, une seule des deux catégories suffit pour apparaître dans le résultat.
+            </p>
+</section>
+<section class="presentation" id="question-e">
+<h2>e - Les fournisseurs de viande et de poisson</h2>
+<h3>Objectif</h3>
+<p>
+                Cette fois, il faut trouver les fournisseurs qui proposent
+                <strong>à la fois</strong> au moins un produit de catégorie 6 (Viandes)
+                et un produit de catégorie 8 (Poissons et fruits de mer).
+            </p>
+<h3>Notre démarche</h3>
+<p>
+                Marc a commencé par séparer les produits des deux catégories.
+                Il a ensuite recherché les fournisseurs présents dans les deux listes.
+            </p>
+<figure class="capture-figure">
+<img alt="Liste des fournisseurs de produits de catégorie Viandes" class="image-resultat" src="../assets/images/exploration/marc/e-fournisseurs-viande.png"/>
+<figcaption>Première liste : les fournisseurs de viandes.</figcaption>
+</figure>
+<figure class="capture-figure">
+<img alt="Liste des fournisseurs de produits de catégorie Poissons" class="image-resultat" src="../assets/images/exploration/marc/e-fournisseurs-poisson.png"/>
+<figcaption>Deuxième liste : les fournisseurs de poissons.</figcaption>
+</figure>
+<h3>Requête SQL finale</h3>
+<pre><code>SELECT Fournisseur.Societe
+FROM Fournisseur
+WHERE Fournisseur.NoFour IN (
+    SELECT Produit.NoFour
+    FROM Produit
+    WHERE Produit.CodeCateg = 6
+)
+AND Fournisseur.NoFour IN (
+    SELECT Produit.NoFour
+    FROM Produit
+    WHERE Produit.CodeCateg = 8
+);</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Sakura Imports et Moines de Paris, fournisseurs des deux catégories" class="image-resultat" src="../assets/images/exploration/marc/e-fournisseurs-communs.png"/>
+<figcaption>Résultat de Marc : Sakura Imports et Moines de Paris.</figcaption>
+</figure>
+<p class="resultat">2 fournisseurs communs</p>
+<p>
+                Maxim a obtenu les mêmes sociétés avec une sous-requête différente.
+                Dans son deuxième rapport, il montre notamment une correction de l'opérateur LIKE :
+                sur leur configuration d'Access, il fallait utiliser l'astérisque * et non %.
+            </p>
+<figure class="capture-figure">
+<img alt="Capture de Maxim confirmant les deux fournisseurs communs" class="image-resultat" src="../assets/images/exploration/maxim/e-fournisseurs-communs.png"/>
+<figcaption>Vérification de Maxim : les mêmes deux fournisseurs.</figcaption>
+</figure>
+<h3>Méthode de Killian</h3><p>Comme Marc, Killian a retenu deux sous-requêtes avec IN : une pour la catégorie 6 (viandes) et une pour la catégorie 8 (poissons).</p><pre><code>SELECT F.Societe
+FROM Fournisseur AS F
+WHERE F.NoFour IN (
+    SELECT P.NoFour
+    FROM Produit AS P
+    WHERE P.CodeCateg = 6
+)
+AND F.NoFour IN (
+    SELECT P.NoFour
+    FROM Produit AS P
+    WHERE P.CodeCateg = 8
+);</code></pre><figure class="capture-figure"><img alt="Résultat de Killian : les fournisseurs Sakura Imports et Moines de Paris" class="image-resultat" src="../assets/images/exploration/killian/e-fournisseurs-viande-poisson.png"/><figcaption>Killian : les deux fournisseurs présents dans les deux catégories.</figcaption></figure><p>Le résultat confirme Sakura Imports et Moines de Paris.</p></section>
+<section class="presentation" id="question-f">
+<h2>f - Les produits conditionnés en carton ou en verre</h2>
+<h3>Objectif</h3>
+<p>
+                Repérer les produits dont la description du conditionnement contient
+                les mots « carton » ou « verre ».
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT
+    Produit.NomProd,
+    Produit.QteParUnit
+FROM Produit
+WHERE
+    Produit.QteParUnit LIKE "*carton*"
+    OR Produit.QteParUnit LIKE "*verre*";</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Liste des produits et de leur conditionnement en carton ou verre" class="image-resultat" src="../assets/images/exploration/marc/f-conditionnements.png"/>
+<figcaption>Capture du rapport de Marc : produits filtrés sur leur conditionnement.</figcaption>
+</figure>
+<p>
+                Le caractère * utilisé avec LIKE permet de rechercher un mot
+                au milieu d'un texte plus long, comme « 12 cartons (500 g) ».
+            </p>
+</section>
+<section class="presentation" id="question-g">
+<h2>g - Les trois dernières commandes de Max Deschamps</h2>
+<h3>Objectif</h3>
+<p>
+                Retrouver trois commandes associées au contact Max Deschamps,
+                en commençant par les plus récentes.
+            </p>
+<h3>Requête SQL de Marc</h3>
+<pre><code>SELECT TOP 3
+    Clientele.Contact,
+    Commande.dateEnv,
+    Commande.[N° commande]
+FROM
+    Clientele
+    INNER JOIN Commande
+    ON Clientele.CodeCli = Commande.CodeCli
+WHERE
+    Clientele.Contact = "Max Deschamps"
+ORDER BY
+    Commande.dateEnv DESC;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Trois commandes de Max Deschamps triées par date d'envoi décroissante" class="image-resultat" src="../assets/images/exploration/marc/g-max-deschamps.png"/>
+<figcaption>Capture de Marc : trois commandes triées par date d'envoi.</figcaption>
+</figure>
+<p>
+                Marc utilise TOP 3 et trie par <strong>date d'envoi</strong> (dateEnv).
+                Dans son rapport, Maxim utilise plutôt <strong>la date de commande</strong> (DateCde).
+                Ce n'est pas exactement le même classement : pour rechercher les dernières commandes
+                passées, la date de commande est la plus adaptée.
+            </p>
+</section>
+<section class="presentation" id="question-h">
+<h2>h - Les fournisseurs proposant uniquement des desserts</h2>
+<h3>Objectif</h3>
+<p>
+                Retrouver les fournisseurs qui proposent au moins un dessert,
+                mais aucun produit d'une autre catégorie.
+            </p>
+<h3>Requête SQL de Maxim</h3>
+<pre><code>SELECT DISTINCT
+    Fournisseur.Societe
+FROM
+    (Fournisseur
+    INNER JOIN Produit
+    ON Fournisseur.NoFour = Produit.NoFour)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg
+WHERE
+    Categorie.NomCateg LIKE "*Dessert*"
+    AND Fournisseur.NoFour NOT IN (
+        SELECT F.NoFour
+        FROM
+            (Fournisseur AS F
+            INNER JOIN Produit AS P
+            ON F.NoFour = P.NoFour)
+            INNER JOIN Categorie AS C
+            ON P.CodeCateg = C.CodeCateg
+        WHERE C.NomCateg NOT LIKE "*Dessert*"
+    );</code></pre>
+<h3>Difficulté rencontrée</h3>
+<p>
+                Maxim explique qu'il ne suffit pas de chercher des fournisseurs qui vendent des desserts :
+                il faut aussi exclure ceux qui proposent d'autres catégories.
+                Il a utilisé NOT IN pour retirer ces fournisseurs.
+            </p>
+<figure class="capture-figure">
+<img alt="Essai non concluant de Maxim : liste des fournisseurs vide" class="image-resultat" src="../assets/images/exploration/maxim/h-essai-vide.png"/>
+<figcaption>Capture d'un essai de Maxim qui ne donnait aucun résultat, pas du résultat final.</figcaption>
+</figure>
+<p>
+                Le résultat final n'est pas illustré par une capture dans les rapports fournis.
+                Nous ne donnons donc pas de nombre de fournisseurs non vérifié.
+            </p>
+</section>
+<section class="presentation" id="question-i">
+<h2>i - Les fournisseurs étrangers sans produit au catalogue</h2>
+<h3>Objectif</h3>
+<p>
+                Identifier les fournisseurs situés hors de France qui n'ont
+                actuellement aucun produit associé dans la base KDou.
+            </p>
+<h3>Notre démarche</h3>
+<p>
+                On effectue un LEFT JOIN entre Fournisseur et Produit.
+                Les fournisseurs sans produit sont retrouvés avec IS NULL.
+                On exclut ensuite la France.
+            </p>
+<figure class="capture-figure">
+<img alt="Première liste des fournisseurs sans produit, incluant un fournisseur français" class="image-resultat" src="../assets/images/exploration/marc/i-avant-filtre-france.png"/>
+<figcaption>Étape intermédiaire de Marc : trois fournisseurs sans produit, avant le filtre sur le pays.</figcaption>
+</figure>
+<h3>Requête SQL finale</h3>
+<pre><code>SELECT
+    Fournisseur.Societe,
+    Pays.PaysFR
+FROM
+    (Fournisseur
+    LEFT JOIN Produit
+    ON Fournisseur.NoFour = Produit.NoFour)
+    INNER JOIN Pays
+    ON Fournisseur.NoPays = Pays.NoPays
+WHERE
+    Pays.PaysFR &lt;&gt; "France"
+    AND Produit.RefProd IS NULL
+ORDER BY
+    Fournisseur.Societe;</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure">
+<img alt="Deux fournisseurs étrangers qui n'ont aucun produit dans le catalogue" class="image-resultat" src="../assets/images/exploration/marc/i-fournisseurs-etrangers.png"/>
+<figcaption>Capture de Marc : Pacific United Traders Ltd. (Australie) et Sabor do Sul Ltda. (Brésil).</figcaption>
+</figure>
+<p class="resultat">2 fournisseurs étrangers sans produit</p>
+<p>
+                La requête SQL présentée ici est la version plus courte de Maxim.
+                Elle permet de retrouver les mêmes fournisseurs que la méthode de Marc.
+            </p>
+</section>
+<section class="presentation" id="question-j">
+<h2>j - Les couples de clients partenaires à Paris</h2>
+<h3>Objectif</h3>
+<p>
+                Retrouver les clients situés à Paris qui sont rattachés à un autre client
+                par le champ CodeCliPart.
+            </p>
+<h3>Notre démarche</h3>
+<p>
+                On utilise deux fois la table Clientele grâce à un alias Clientele_1.
+                La jointure associe le CodeCliPart d'un client au CodeCli de son partenaire.
+            </p>
+<h3>Requête SQL</h3>
+<pre><code>SELECT
+    Clientele.Contact,
+    Clientele.Ville,
+    Clientele.CodeCliPart,
+    Clientele.CodeCli,
+    Clientele_1.Contact,
+    Clientele_1.Ville,
+    Clientele_1.CodeCliPart,
+    Clientele_1.CodeCli
+FROM
+    Clientele
+    INNER JOIN Clientele AS Clientele_1
+    ON Clientele.CodeCliPart = Clientele_1.CodeCli
+WHERE
+    Clientele.Ville = "Paris";</code></pre>
+<h3>Résultat obtenu</h3>
+<figure class="capture-figure capture-large">
+<img alt="Tableau Access présentant deux associations de clients partenaires parisiens" class="image-resultat" src="../assets/images/exploration/marc/j-partenaires-paris.png"/>
+<figcaption>Capture du rapport de Marc : deux associations de clients. Faites défiler horizontalement si nécessaire.</figcaption>
+</figure>
+<p>
+                Marc a trouvé deux correspondances : Aria Cruz et Alyssa Duranta,
+                puis Marie Lefevre et Alyssa Duranta. Les deux premiers clients
+                sont associés au code partenaire ALYAD.
+            </p>
+</section>
+
+<section class="presentation">
+<h2>Conclusion</h2>
+<p>
+                Cette exploration nous a permis de mieux comprendre les informations
+                contenues dans la base KDou. Nous avons utilisé les filtres WHERE,
+                les jointures, les sous-requêtes et les tris ORDER BY.
+                Certaines questions demandaient aussi de faire attention aux différences
+                entre OR et AND ou d'utiliser plusieurs étapes pour vérifier les résultats.
+            </p>
+<p>
+                Après cette première exploration, nous avons pu passer à des indicateurs
+                plus complets dans la page Analyse.
+            </p>
+</section>
+<section class="presentation">
+<h2>Nos rapports individuels</h2>
+<p>Les explications détaillées et les autres essais se trouvent dans les rapports du groupe.</p>
+<ul>
+<li><a href="../assets/rapports/110_Porquet_Marc_rapport_SAE1.04.pdf">Rapport de Marc</a></li>
+<li><a href="../assets/rapports/Maxim_SAE_1.04_BD.pdf">Rapport de Maxim</a></li>
+<li><a href="../assets/rapports/SAE_1.04_killian_rapport_individuel.pdf">Rapport de Killian</a></li></ul>
+</section>
+</main>
+<footer>
+    <p>
+        SAE S1.04 - base de données - BUT informatique
+    </p>
+    <p>
+        Marc Porquet, Maxim Crepieux, Killian Umambo
+    </p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>KDou - Analyse</title>
+<link href="../assets/style.css" rel="stylesheet"/>
+</head>
+<body>
+<header>
+<nav>
+<a class="logo" href="../index.html">KDOU</a>
+<div class="menu">
+<a href="../index.html">Accueil</a>
+<a href="base.html">Base de données</a>
+<a href="page 1.html">Exploration</a>
+<a href="page 2.html">Analyse</a>
+<a href="page 3.html">Propositions</a>
+</div>
+</nav>
+</header>
+<main>
+<section class="introduction">
+<h1>Analyse des données</h1>
+<p>Nos requêtes SQL pour mieux comprendre les ventes, les produits et les clients de KDou.</p>
+    <p>Sujet de la SAE sur laquelle nous avons travaillé : </p>
+    <a href="../assets/rapports/SAE2026.pdf">SAE2026</a>
+</section>
+<section class="presentation">
+<h2>Présentation de notre analyse</h2>
+<p>Après l'exploration de la base, nous avons réalisé des requêtes plus détaillées pour calculer des indicateurs et répondre aux questions de la SAE.</p>
+<ul>
+<li><a href="#question2">Question 2 : chiffre d'affaires des fournisseurs de l'UE</a></li>
+<li><a href="#question3">Question 3 : chiffre d'affaires annuel des desserts et boissons</a></li>
+<li><a href="#question4">Question 4 : produits carnés non commandés</a></li>
+<li><a href="#question5">Question 5 : clients pilotes et partenaires</a></li>
+</ul>
+</section>
+<section class="presentation" id="question2">
+<h2>2 - Chiffre d'affaires des fournisseurs de l'UE</h2>
+<h3>Objectif</h3>
+<p>On cherche le chiffre d'affaires total généré par les produits provenant de fournisseurs de l'Union européenne.</p>
+<h3>Notre démarche</h3>
+<p>On utilise les tables DetailCommande, Produit, Categorie, Fournisseur et Pays. Le montant de chaque ligne de commande est calculé avec la quantité, le coût d'achat, le coefficient de marge et la remise.</p>
+<h3>Première requête : le CA de chaque ligne de commande</h3>
+<pre><code>SELECT
+    Produit.NomProd,
+    DetailCommande.Quantité,
+    Produit.CoutAchat,
+    Categorie.CoefMarge,
+    DetailCommande.[Remise (%)],
+    DetailCommande.Quantité
+        * Produit.CoutAchat
+        * Categorie.CoefMarge
+        * (1 - DetailCommande.[Remise (%)]) AS CA_Produit
+FROM
+    (DetailCommande
+    INNER JOIN Produit
+    ON DetailCommande.[Réf produit] = Produit.RefProd)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg;</code></pre>
+<div class="image-centree">
+<img alt="Tableau du chiffre d'affaires calculé pour chaque ligne de commande, rapport de Marc" class="image-resultat" src="../assets/images/analyse/marc/q2-calcul-lignes.png"/>
+<p><em>Calcul intermédiaire réalisé par Marc.</em></p>
+</div>
+<p>Un même produit peut apparaître plusieurs fois car les quantités et les remises varient selon les commandes. Il faut ensuite additionner les montants et filtrer les fournisseurs de l'UE.</p>
+<h3>Requête finale</h3>
+<pre><code>SELECT
+    SUM(
+        DetailCommande.Quantité
+        * Produit.CoutAchat
+        * Categorie.CoefMarge
+        * (1 - DetailCommande.[Remise (%)])
+    ) AS CA_Total_UE
+FROM
+    (((DetailCommande
+    INNER JOIN Produit
+    ON DetailCommande.[Réf produit] = Produit.RefProd)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg)
+    INNER JOIN Fournisseur
+    ON Produit.NoFour = Fournisseur.NoFour)
+    INNER JOIN Pays
+    ON Fournisseur.NoPays = Pays.NoPays
+WHERE
+    Pays.UE = "Membre";</code></pre>
+<h3>Résultat obtenu</h3>
+<div class="image-centree">
+<img alt="Résultat du chiffre d'affaires total UE dans le rapport de Marc" class="image-resultat" src="../assets/images/analyse/marc/q2-ca-ue.png"/>
+</div>
+<p class="resultat">2 754 529,74 €</p>
+<p>Nous obtenons environ 2,75 millions d'euros de chiffre d'affaires sur les produits fournis par des fournisseurs de l'UE.</p>
+<h3>Une difficulté rencontrée par Maxim</h3>
+<p>Maxim a également réalisé cette requête. Il explique avoir d'abord obtenu un montant incorrect en construisant le calcul, avant de retrouver le même résultat final.</p>
+<div class="image-centree">
+<img alt="Ancien calcul incorrect de Maxim, 1 340 579,91 euros" class="image-resultat" src="../assets/images/analyse/maxim/q2-ancien-calcul.png"/>
+<p><em>Ancien résultat incorrect.</em></p>
+<img alt="Résultat corrigé de Maxim, 2 754 529,74 euros" class="image-resultat" src="../assets/images/analyse/maxim/q2-ca-ue.png"/>
+<p><em>Résultat corrigé.</em></p>
+</div>
+<h3>Résultat de Killian</h3><p>Killian a aussi calculé le CA des fournisseurs de l’Union européenne, en tenant compte du coefficient de marge et des remises.</p><pre><code>SELECT SUM(
+    De.Quantité * P.CoutAchat * C.CoefMarge
+    * (1 - De.[Remise (%)])
+) AS CA_Total_UE
+FROM (((DetailCommande AS De
+INNER JOIN Produit AS P ON De.[Réf produit] = P.RefProd)
+INNER JOIN Categorie AS C ON P.CodeCateg = C.CodeCateg)
+INNER JOIN Fournisseur AS F ON P.NoFour = F.NoFour)
+INNER JOIN Pays ON F.NoPays = Pays.NoPays
+WHERE Pays.UE = "Membre";</code></pre><figure class="capture-figure"><img alt="Résultat Access de Killian : chiffre d’affaires UE 2754529,74 euros" class="image-resultat" src="../assets/images/analyse/killian/q2-ca-ue.png"/><figcaption>Killian obtient le même total : 2 754 529,74 €.</figcaption></figure><p>Sa requête donne le même chiffre d’affaires que celles de Marc et Maxim.</p></section>
+<section class="presentation" id="question3">
+<h2>3 - Chiffre d'affaires annuel des desserts et boissons</h2>
+<h3>Objectif</h3>
+<p>On cherche le chiffre d'affaires annuel des catégories Desserts et Boissons réunies.</p>
+<h3>Notre démarche</h3>
+<p>On commence par retrouver les produits appartenant à ces deux catégories.</p>
+<pre><code>SELECT
+    Produit.NomProd,
+    Categorie.NomCateg
+FROM
+    Categorie
+    INNER JOIN Produit
+    ON Categorie.CodeCateg = Produit.CodeCateg
+WHERE
+    Categorie.NomCateg = "Desserts"
+    OR Categorie.NomCateg = "Boissons";</code></pre>
+<div class="image-centree">
+<img alt="Liste des produits des catégories Desserts et Boissons" class="image-resultat" src="../assets/images/analyse/marc/q3-produits-desserts-boissons.png"/>
+</div>
+<p>Ensuite, on utilise la date de commande DateCde, la fonction Year pour récupérer l'année et GROUP BY pour regrouper les montants par année.</p>
+<h3>Requête finale</h3>
+<pre><code>SELECT
+    Year(Commande.DateCde) AS Annee,
+    SUM(
+        DetailCommande.Quantité
+        * Produit.CoutAchat
+        * Categorie.CoefMarge
+        * (1 - DetailCommande.[Remise (%)])
+    ) AS CA_Total
+FROM
+    ((Commande
+    INNER JOIN DetailCommande
+    ON Commande.[N° commande] = DetailCommande.[N° commande])
+    INNER JOIN Produit
+    ON DetailCommande.[Réf produit] = Produit.RefProd)
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg
+WHERE
+    Categorie.NomCateg = "Desserts"
+    OR Categorie.NomCateg = "Boissons"
+GROUP BY
+    Year(Commande.DateCde);</code></pre>
+<h3>Résultat obtenu</h3>
+<div class="image-centree">
+<img alt="Tableau Access du chiffre d'affaires annuel des desserts et boissons pour 2020, 2021 et 2022" class="image-resultat" src="../assets/images/analyse/marc/q3-ca-annuel.png"/>
+</div>
+<p>Le tableau présente le montant des ventes de ces deux catégories pour chaque année enregistrée dans la base. Le résultat de 2021 est beaucoup plus élevé que ceux de 2020 et 2022.</p>
+<h3>Méthode de Killian (sans les remises)</h3><p>Killian a regroupé le chiffre d’affaires par année avec Year et GROUP BY, mais sa requête ne soustrait pas les remises : ce calcul est donc différent de celui de Marc.</p><pre><code>SELECT Year(Commande.DateCde) AS Annee,
+    SUM(DetailCommande.Quantité * Produit.CoutAchat
+        * Categorie.CoefMarge) AS CA_Annuel_Sante
+FROM (((Commande
+INNER JOIN DetailCommande
+    ON Commande.[N° commande] = DetailCommande.[N° commande])
+INNER JOIN Produit
+    ON DetailCommande.[Réf produit] = Produit.RefProd)
+INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg)
+WHERE Categorie.NomCateg LIKE "*dessert*"
+    OR Categorie.NomCateg LIKE "*boisson*"
+GROUP BY Year(Commande.DateCde)
+ORDER BY Year(Commande.DateCde);</code></pre><figure class="capture-figure"><img alt="Capture du CA annuel de Killian, avec des colonnes trop étroites pour afficher 2021 et 2022" class="image-resultat" src="../assets/images/analyse/killian/q3-ca-annuel-sans-remise.png"/><figcaption>La capture affiche 2020 et des dièses (####) pour les montants de 2021 et 2022.</figcaption></figure><p>Les dièses viennent de l’affichage trop étroit dans Access : les montants de 2021 et 2022 ne sont pas lisibles sur la capture. On ne les reprend donc pas ici.</p></section>
+<section class="presentation" id="question4">
+<h2>4 - Produits carnés non commandés</h2>
+<h3>Objectif</h3>
+<p>On cherche le nombre de produits carnés qui n'apparaissent dans aucune commande. Marc et Maxim ont choisi des catégories différentes, ce qui explique leurs résultats distincts.</p>
+<h3>Méthode de Marc : catégorie Viandes</h3>
+<p>Marc a retenu la catégorie Viandes (CodeCateg = 6). La première requête permet de retrouver les produits concernés.</p>
+<pre><code>SELECT
+    Produit.NomProd
+FROM
+    Produit
+WHERE
+    Produit.CodeCateg = 6
+    AND Produit.RefProd NOT IN (
+        SELECT [Réf produit]
+        FROM DetailCommande
+    );</code></pre>
+<div class="image-centree">
+<img alt="Les deux produits de la catégorie Viandes jamais commandés" class="image-resultat" src="../assets/images/analyse/marc/q4-produits-non-commandes.png"/>
+</div>
+<p>Il reste ensuite à compter les produits avec COUNT.</p>
+<pre><code>SELECT
+    COUNT(*) AS NbProduits
+FROM
+    Produit
+WHERE
+    Produit.CodeCateg = 6
+    AND Produit.RefProd NOT IN (
+        SELECT [Réf produit]
+        FROM DetailCommande
+    );</code></pre>
+<div class="image-centree">
+<img alt="Résultat de Marc : deux produits carnés non commandés" class="image-resultat" src="../assets/images/analyse/marc/q4-total.png"/>
+</div>
+<p class="resultat">Marc : 2 produits</p>
+<h3>Méthode de Maxim : viandes et poissons</h3>
+<p>Maxim a inclus les produits des catégories Viandes et Poissons et fruits de mer. Il a utilisé LEFT JOIN et IS NULL pour ne garder que les produits absents des commandes.</p>
+<pre><code>SELECT
+    COUNT(Produit.RefProd) AS Nb_Produits_Carnes_Non_Commandes
+FROM
+    (Produit
+    INNER JOIN Categorie
+    ON Produit.CodeCateg = Categorie.CodeCateg)
+    LEFT JOIN DetailCommande
+    ON Produit.RefProd = DetailCommande.[Réf produit]
+WHERE
+    (Categorie.NomCateg LIKE "*viande*"
+    OR Categorie.NomCateg LIKE "*poisson*")
+    AND DetailCommande.[N° commande] IS NULL;</code></pre>
+<div class="image-centree">
+<img alt="Résultat de Maxim : quatre produits viande ou poisson jamais commandés" class="image-resultat" src="../assets/images/analyse/maxim/q4-total.png"/>
+</div>
+<p class="resultat">Maxim : 4 produits</p>
+<p>Cette différence vient du périmètre retenu : Marc a compté uniquement les viandes, tandis que Maxim a aussi inclus les poissons.</p>
+<h3>Méthode de Killian : viandes et poissons</h3><p>Killian a également choisi les catégories Viandes et Poissons et fruits de mer, avec LEFT JOIN et IS NULL pour compter les produits absents des commandes.</p><pre><code>SELECT COUNT(Produit.RefProd) AS Nb_Produits_Carnes_Non_Commandes
+FROM (Produit
+INNER JOIN Categorie ON Produit.CodeCateg = Categorie.CodeCateg)
+LEFT JOIN DetailCommande
+    ON Produit.RefProd = DetailCommande.[Réf produit]
+WHERE (Categorie.NomCateg LIKE "*viande*"
+    OR Categorie.NomCateg LIKE "*poisson*")
+    AND DetailCommande.[N° commande] IS NULL;</code></pre><figure class="capture-figure"><img alt="Résultat de Killian : 4 produits des catégories viandes ou poissons non commandés" class="image-resultat" src="../assets/images/analyse/killian/q4-total-viandes-poissons.png"/><figcaption>Killian obtient 4 produits.</figcaption></figure><p>Ce résultat rejoint celui de Maxim ; Marc obtenait 2 en se limitant à la catégorie Viandes.</p></section>
+<section class="presentation" id="question5">
+<h2>5 - Clients pilotes et partenaires</h2>
+<h3>Objectif</h3>
+<p>On cherche à savoir si certains clients pilotes ont passé autant de commandes que l'ensemble de leurs clients partenaires.</p>
+<h3>Étape 1 : compter les commandes de chaque client</h3>
+<p>On utilise une jointure entre Clientele et Commande et on enregistre cette requête sous le nom Q5_NbCommandes.</p>
+<pre><code>SELECT
+    Clientele.CodeCli,
+    COUNT(Commande.[N° commande]) AS NbCommandes
+FROM
+    Clientele
+    LEFT JOIN Commande
+    ON Clientele.CodeCli = Commande.CodeCli
+GROUP BY
+    Clientele.CodeCli;</code></pre>
+<div class="image-centree">
+<img alt="Extrait du nombre de commandes de chaque client" class="image-resultat" src="../assets/images/analyse/marc/q5-commandes-clients.png"/>
+</div>
+<h3>Étape 2 : compter les commandes des partenaires</h3>
+<p>On regroupe les clients par CodeCliPart pour calculer le total des commandes de leurs partenaires. On enregistre cette requête sous le nom Q5_NbReseau.</p>
+<pre><code>SELECT
+    Clientele.CodeCliPart AS CodePilote,
+    SUM(Q5_NbCommandes.NbCommandes) AS NbCommandesPartenaires
+FROM
+    Clientele
+    INNER JOIN Q5_NbCommandes
+    ON Clientele.CodeCli = Q5_NbCommandes.CodeCli
+WHERE
+    Clientele.CodeCliPart IS NOT NULL
+GROUP BY
+    Clientele.CodeCliPart;</code></pre>
+<div class="image-centree">
+<img alt="Nombre total de commandes des partenaires pour chaque client pilote" class="image-resultat" src="../assets/images/analyse/marc/q5-commandes-partenaires.png"/>
+</div>
+<h3>Étape 3 : comparer les deux résultats</h3>
+<p>La requête finale compare les commandes du pilote à celles de ses partenaires et ne garde que les valeurs égales.</p>
+<pre><code>SELECT
+    [Q5_NbReseau].CodePilote,
+    [Q5_NbCommandes].NbCommandes,
+    [Q5_NbReseau].NbCommandesPartenaires
+FROM
+    [Q5_NbReseau]
+    INNER JOIN [Q5_NbCommandes]
+    ON [Q5_NbReseau].CodePilote = [Q5_NbCommandes].CodeCli
+WHERE
+    [Q5_NbCommandes].NbCommandes =
+    [Q5_NbReseau].NbCommandesPartenaires;</code></pre>
+<div class="image-centree">
+<img alt="Tableau final vide, aucune égalité entre les commandes des pilotes et de leurs partenaires" class="image-resultat" src="../assets/images/analyse/marc/q5-comparaison-finale.png"/>
+</div>
+<p class="resultat">Aucune correspondance</p>
+<p>La requête renvoie une table vide : aucun client pilote n'a exactement autant de commandes que l'ensemble de ses partenaires. Par exemple, le pilote ALYAD compte 42 commandes, contre 75 pour ses partenaires.</p>
+</section>
+<section class="presentation">
+<h2>Conclusion</h2>
+<p>Ces quatre analyses permettent de mieux comprendre les ventes, les produits et les relations entre les clients de KDou. Elles montrent aussi l'importance de bien choisir les conditions et les catégories utilisées dans les requêtes.</p>
+</section>
+<section class="presentation">
+<h2>Nos rapports individuels</h2>
+<ul>
+<li><a href="../assets/rapports/110_Porquet_Marc_rapport_SAE1.04.pdf">Rapport de Marc</a></li>
+<li><a href="../assets/rapports/Maxim_SAE_1.04_BD.pdf">Rapport de Maxim</a></li>
+<li><a href="../assets/rapports/SAE_1.04_killian_rapport_individuel.pdf">Rapport de Killian</a></li></ul>
+</section>
+</main>
+<footer>
+    <p>
+        SAE S1.04 - base de données - BUT informatique
+    </p>
+    <p>
+        Marc Porquet, Maxim Crepieux, Killian Umambo
+    </p>
+</footer>
+</body>
+</html>

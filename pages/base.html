@@ -1,0 +1,98 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KDou - Base de données</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+<header>
+    <nav>
+        <a href="../index.html" class="logo">KDOU</a>
+
+        <div class="menu">
+            <a href="../index.html">Accueil</a>
+            <a href="base.html">Base de données</a>
+            <a href="page 1.html">Exploration</a>
+            <a href="page 2.html">Analyse</a>
+            <a href="page 3.html">Propositions</a>
+        </div>
+    </nav>
+</header>
+
+
+<main>
+    <section class="introduction">
+        <h1>Présentation de la base de données</h1>
+        <p>Les tables et les relations de la base KDou.</p>
+        <p>Sujet de la SAE sur laquelle nous avons travaillé : </p>
+        <a href="../assets/rapports/SAE2026.pdf">SAE2026</a>
+    </section>
+
+    <section class="presentation">
+        <h2>La base de données KDou</h2>
+
+        <p>
+            Pour cette SAE, nous avons travaillé sur une base
+            de données fournie au format Access (.accdb).
+            Elle contient des informations sur les clients,
+            les produits, les fournisseurs et les commandes
+            de l'entreprise KDou.
+        </p>
+
+        <div class="image-centree">
+            <img class="image-access"
+                 src="../assets/images/fichier acces.png"
+                 alt="Fichier de la base de données KDou sur Access">
+        </div>
+    </section>
+
+    <section class="presentation">
+        <h2>Le schéma des relations</h2>
+
+        <p>
+            La base contient plusieurs tables reliées entre
+            elles grâce à des clés primaires et étrangères.
+            Ces relations permettent de retrouver les
+            informations de plusieurs tables dans une
+            même requête SQL.
+        </p>
+
+        <div class="image-centree">
+            <img class="image-relations"
+                 src="../assets/images/relations.png"
+                 alt="Schéma des relations de la base KDou">
+        </div>
+    </section>
+
+    <section class="presentation">
+        <h2>Les différentes tables</h2>
+
+        <p>
+            On retrouve principalement les tables Clientele,
+            Commande, DetailCommande, Produit, Categorie,
+            Fournisseur et Pays.
+        </p>
+
+        <p>
+            Par exemple, un client peut passer plusieurs
+            commandes et une commande peut contenir
+            plusieurs produits.
+        </p>
+    </section>
+</main>
+
+
+<footer>
+    <p>
+        SAE S1.04 - base de données - BUT informatique
+    </p>
+    <p>
+        Marc Porquet, Maxim Crepieux, Killian Umambo
+    </p>
+</footer>
+</body>
+</html>

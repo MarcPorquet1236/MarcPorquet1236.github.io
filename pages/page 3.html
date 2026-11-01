@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KDou - Propositions</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="../index.html" class="logo">KDOU</a>
+            <div class="menu">
+                <a href="../index.html">Accueil</a>
+                <a href="base.html">Base de données</a>
+                <a href="page 1.html">Exploration</a>
+                <a href="page 2.html">Analyse</a>
+                <a href="page 3.html">Propositions</a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <section class="introduction">
+            <h1>Nos propositions pour KDou</h1>
+            <p>Nos requêtes personnelles pour aider KDou à améliorer son fonctionnement.</p>
+            <p>Sujet de la SAE sur laquelle nous avons travaillé : </p>
+            <a href="../assets/rapports/SAE2026.pdf">SAE2026</a>
+        </section>
+        <section class="presentation">
+            <h2>Présentation de nos propositions</h2>
+            <p>Pour cette dernière étape de la SAE, chaque membre du groupe devait proposer une requête personnelle utile à KDou. Nous avons étudié les livraisons écologiques, l'approvisionnement français et la provenance des produits hors de l'Union européenne.</p>
+        </section>
+        <section class="presentation">
+            <h2>1 - Les livraisons écologiques à Paris</h2>
+            <p><strong>Proposition de Marc</strong></p>
+            <h3>Objectif</h3>
+            <p>Dans notre SAE d'économie, nous avions proposé à KDou de collaborer avec des transporteurs écologiques, notamment en utilisant des vélos-cargos pour les livraisons dans Paris.</p>
+            <p>Pour cette requête personnelle, j'ai donc décidé de chercher le nombre de commandes passées par les clients parisiens. L'objectif est d'estimer si cette solution de livraison pourrait être intéressante.</p>
+            <h3>Notre démarche</h3>
+            <p>On utilise les tables Clientele et Commande, reliées grâce au champ CodeCli. On filtre ensuite les clients dont la ville est Paris, puis COUNT permet de compter les commandes correspondantes.</p>
+            <h3>Requête SQL</h3>
+            <pre><code>SELECT
+    COUNT(Commande.[N° commande]) AS NbCommandesParis
+FROM
+    Clientele
+    INNER JOIN Commande
+    ON Clientele.CodeCli = Commande.CodeCli
+WHERE
+    Clientele.Ville = "Paris";</code></pre>
+            <h3>Résultat obtenu</h3>
+            <div class="image-centree">
+                <img src="../assets/images/propositions/marc/marc-resultat.png"
+                    alt="Résultat Access indiquant 159 commandes de clients parisiens"
+                    class="image-resultat">
+            </div>
+            <p class="resultat">159 commandes</p>
+            <p>Après avoir exécuté la requête, on obtient 159 commandes passées par des clients situés à Paris.</p>
+            <h3>Notre proposition</h3>
+            <p>Une partie des commandes de KDou pourrait être livrée avec des vélos-cargos. On pourrait tester ce système à Paris pour vérifier son fonctionnement, avant de l'utiliser dans d'autres villes.</p>
+        </section>
+        <section class="presentation">
+            <h2>2 - Les produits des fournisseurs français</h2>
+            <p><strong>Proposition de Maxim</strong></p>
+            <h3>Objectif</h3>
+            <p>Maxim a décidé de rechercher les produits du catalogue fournis par des entreprises situées en France. Il souhaite identifier les approvisionnements français pour envisager de réduire les distances de transport.</p>
+            <h3>Notre démarche</h3>
+            <p>On relie les tables Fournisseur et Produit grâce à NoFour. La condition NoPays = 9 sélectionne les fournisseurs français, puis ORDER BY trie les produits par ordre alphabétique.</p>
+            <h3>Requête SQL</h3>
+            <pre><code>SELECT
+    Produit.NomProd,
+    Fournisseur.Societe,
+    Fournisseur.NoPays
+FROM
+    Fournisseur
+    INNER JOIN Produit
+    ON Fournisseur.NoFour = Produit.NoFour
+WHERE
+    Fournisseur.NoPays = 9
+ORDER BY
+    Produit.NomProd;</code></pre>
+            <h3>Résultat obtenu</h3>
+            <p>La requête affiche les produits du catalogue provenant de fournisseurs français et le nom de leur société. Le rapport de Maxim ne comporte pas de capture de ce résultat.</p>
+            <h3>Notre proposition</h3>
+            <p>KDou pourrait étudier la possibilité de privilégier certains fournisseurs proches, lorsque cela est pertinent, afin de réduire l'impact environnemental de ses transports.</p>
+        </section>
+        <section class="presentation">
+            <h2>3 - Combien de produits proviennent de pays hors UE ?</h2>
+            <p><strong>Proposition de Killian</strong></p>
+            <h3>Objectif</h3>
+            <p>Killian a cherché à connaître le nombre de produits proposés par KDou dont les fournisseurs se trouvent dans un pays hors de l'Union européenne. Cet indicateur permet d'évaluer la part du catalogue liée à ces approvisionnements.</p>
+            <h3>Notre démarche</h3>
+            <p>Il relie Produit, Fournisseur et Pays pour retrouver le pays de chaque fournisseur, puis utilise la condition UE = "Hors" et COUNT pour compter les produits concernés.</p>
+            <h3>Requête SQL</h3>
+            <pre><code>SELECT COUNT(P.RefProd) AS NbProduitsHorsUE
+FROM (Produit AS P
+INNER JOIN Fournisseur AS F ON P.NoFour = F.NoFour)
+INNER JOIN Pays AS Pa ON F.NoPays = Pa.NoPays
+WHERE Pa.UE = "Hors";</code></pre>
+            <h3>Résultat obtenu</h3>
+            <div class="image-centree">
+                <img src="../assets/images/propositions/killian/hors-ue-resultat.png"
+                     alt="Résultat de Killian : 62 produits associés à des fournisseurs hors Union européenne"
+                     class="image-resultat">
+            </div>
+            <p class="resultat">62 produits</p>
+            <h3>Notre proposition</h3>
+            <p>Ce résultat pourrait aider KDou à examiner sa dépendance aux approvisionnements hors UE et à étudier, quand cela est possible, des alternatives plus proches afin de limiter certains transports.</p>
+        </section>
+        <section class="presentation">
+            <h2>Conclusion</h2>
+            <p>Nos trois propositions portent sur différents aspects des transports et de l'approvisionnement : les commandes parisiennes, les fournisseurs français et les produits provenant de pays hors UE. Elles peuvent aider KDou à identifier des pistes d'amélioration, mais d'autres informations seraient nécessaires pour vérifier leur rentabilité et leur impact environnemental.</p>
+        </section>
+        <section class="presentation">
+            <h2>Nos rapports individuels</h2>
+            <p>Retrouvez les rapports complets de notre groupe avec nos requêtes et nos explications.</p>
+            <ul>
+                <li><a href="../assets/rapports/110_Porquet_Marc_rapport_SAE1.04.pdf">Rapport de Marc</a></li>
+                <li><a href="../assets/rapports/Maxim_SAE_1.04_BD.pdf">Rapport de Maxim</a></li>
+                <li><a href="../assets/rapports/SAE_1.04_killian_rapport_individuel.pdf">Rapport de Killian</a></li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>
+            SAE S1.04 - base de données - BUT informatique
+        </p>
+        <p>
+            Marc Porquet, Maxim Crepieux, Killian Umambo
+        </p>
+    </footer>
+</body>
+</html>
